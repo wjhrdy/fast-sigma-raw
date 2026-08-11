@@ -1,7 +1,7 @@
 # Fast Sigma Raw
 
 A small drag-and-drop desktop converter from SIGMA/Foveon X3F files to 16-bit,
-three-channel LinearRaw DNG. It runs on macOS, Linux, and Windows and also
+three-channel LinearRaw DNG. It runs on macOS and Linux and also
 includes a command-line interface. The current development target is the
 Merrill/F20 pipeline in SIGMA Photo Pro 6.9.
 
@@ -15,7 +15,7 @@ Download the archive for your computer from the
 extract the entire archive.
 
 1. Open **Fast Sigma Raw** (`Fast Sigma Raw.app` on macOS or
-   `fast-sigma-raw-gui.exe` on Windows).
+   `fast-sigma-raw-gui` on Linux).
 2. Drag one or more `.X3F` files into the window, or choose them with the file
    picker.
 3. Export beside each original or choose one output directory.
@@ -39,18 +39,6 @@ xattr -dr com.apple.quarantine "/Applications/Fast Sigma Raw.app"
 
 Separate Apple Silicon (`arm64`) and Intel (`x86_64`) archives are published.
 The application requires macOS 12 or newer.
-
-### Windows first launch
-
-Keep the DLL files from the archive beside `fast-sigma-raw-gui.exe`. Releases
-are not currently Authenticode-signed, so Microsoft Defender SmartScreen may
-show a warning. After checking the release checksum, choose **More info** and
-**Run anyway**. The equivalent PowerShell unblock command, run inside the
-extracted release directory, is:
-
-```powershell
-Get-ChildItem . -Recurse | Unblock-File
-```
 
 ### Linux first launch
 
@@ -113,8 +101,7 @@ binary or proprietary code is copied or linked.
 
 ## Command line
 
-The release archive also contains `fast-sigma-raw` (`fast-sigma-raw.exe` on
-Windows):
+The release archive also contains the `fast-sigma-raw` command-line tool:
 
 ```sh
 fast-sigma-raw input.X3F output.dng
@@ -152,41 +139,29 @@ On Ubuntu/Debian:
 
 ```sh
 sudo apt-get install build-essential pkg-config libtiff-dev \
+  libwebp-dev libzstd-dev liblzma-dev libjbig-dev libjpeg-dev \
+  libdeflate-dev zlib1g-dev \
   libxkbcommon-dev libwayland-dev libx11-dev libxcursor-dev \
   libxrandr-dev libxi-dev libgl1-mesa-dev
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 LIBTIFF_STATIC=1 cargo build --release --bins
 ```
 
-Windows builds use Rust's `x86_64-pc-windows-gnu` target and an MSYS2 UCRT64
-shell:
-
-```sh
-pacman -S --needed mingw-w64-ucrt-x86_64-gcc \
-  mingw-w64-ucrt-x86_64-pkgconf mingw-w64-ucrt-x86_64-libtiff
-rustup target add x86_64-pc-windows-gnu
-CARGO_BUILD_TARGET=x86_64-pc-windows-gnu \
-PKG_CONFIG_ALLOW_CROSS=1 \
-PKG_CONFIG_PATH=/ucrt64/lib/pkgconfig \
-cargo build --release --bins
-```
-
 The GUI binary is `fast-sigma-raw-gui`; the CLI binary is `fast-sigma-raw`.
 
 ## Continuous integration and releases
 
-Every push and pull request builds, lints, and tests the project on macOS,
-Ubuntu, and Windows. Pushing a version tag such as `v0.1.0` runs the release
+Every push and pull request builds, lints, and tests the project on macOS and
+Ubuntu. Pushing a version tag such as `v0.1.0` runs the release
 workflow, which creates:
 
 - macOS Apple Silicon and Intel application archives;
 - a Linux x86-64 archive;
-- a Windows x86-64 archive with required DLLs; and
 - `SHA256SUMS.txt` covering all downloadable archives.
 
-LibTIFF is statically linked on macOS and Linux. Windows packages its UCRT64
-runtime DLL closure. macOS and Windows builds are intentionally unsigned until
-maintainers configure trusted code-signing identities in the repository.
+LibTIFF is statically linked on macOS and Linux. macOS builds have an ad-hoc
+signature but are not notarized until maintainers configure an Apple Developer
+signing identity in the repository.
 
 ## Format behavior
 

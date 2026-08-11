@@ -94,49 +94,9 @@ jobs:
           path: dist/*.tar.gz
           if-no-files-found: error
 
-  windows:
-    runs-on: windows-2025
-    steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-pc-windows-gnu
-      - uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: true
-          path-type: inherit
-          install: >-
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-pkgconf
-            mingw-w64-ucrt-x86_64-libtiff
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: release-windows-gnu
-      - name: Build and package application
-        shell: msys2 {0}
-        env:
-          CARGO_BUILD_TARGET: x86_64-pc-windows-gnu
-          PKG_CONFIG_ALLOW_CROSS: "1"
-          PKG_CONFIG_PATH: /ucrt64/lib/pkgconfig
-        run: |
-          PACKAGE_VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)"
-          if [[ "$GITHUB_REF_TYPE" == tag && "$GITHUB_REF_NAME" != "v$PACKAGE_VERSION" ]]; then
-            echo "tag $GITHUB_REF_NAME does not match Cargo version $PACKAGE_VERSION" >&2
-            exit 1
-          fi
-          cargo test --all-targets --locked
-          cargo build --release --locked --bins
-          packaging/windows/package.sh "$PACKAGE_VERSION" x86_64
-      - uses: actions/upload-artifact@v7
-        with:
-          name: windows-x86_64
-          path: dist/*.zip
-          if-no-files-found: error
-
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [macos, linux, windows]
+    needs: [macos, linux]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v8

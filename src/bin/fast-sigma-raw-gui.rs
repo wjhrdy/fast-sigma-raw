@@ -1,5 +1,3 @@
-#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
-
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Receiver};

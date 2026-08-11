@@ -123,9 +123,8 @@ fn publish(temporary: &Path, output: &Path, overwrite: bool) -> Result<(), Strin
         return Err(format!("output already exists: {}", output.display()));
     }
 
-    // Windows cannot atomically rename over an existing file. Keep the old
-    // DNG beside the destination until the replacement has been published so
-    // a failed rename never destroys the user's prior export.
+    // Keep the old DNG beside the destination until the replacement has been
+    // published so a failed rename never destroys the user's prior export.
     let backup = sibling_temporary(output, "backup");
     fs::rename(output, &backup).map_err(|error| {
         format!(

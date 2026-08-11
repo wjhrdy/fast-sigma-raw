@@ -1,6 +1,5 @@
 fn main() {
     let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
-    let target_env = std::env::var("CARGO_CFG_TARGET_ENV").unwrap_or_default();
     let static_tiff = std::env::var_os("LIBTIFF_STATIC").is_some();
     let tiff = pkg_config::Config::new()
         .atleast_version("4.0")
@@ -40,15 +39,5 @@ fn main() {
     println!("cargo:rustc-link-lib=iconv");
     if target_os == "linux" {
         println!("cargo:rustc-link-lib=pthread");
-    } else if target_os == "windows" && target_env == "gnu" {
-        println!("cargo:rustc-link-lib=winpthread");
-    }
-
-    if target_os == "windows" {
-        winresource::WindowsResource::new()
-            .set_manifest_file("packaging/windows/app.manifest")
-            .compile()
-            .expect("failed to compile the Windows application manifest");
-        println!("cargo:rerun-if-changed=packaging/windows/app.manifest");
     }
 }
