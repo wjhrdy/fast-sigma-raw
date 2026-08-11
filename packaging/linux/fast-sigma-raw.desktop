@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Fast Sigma Raw
+Comment=Convert SIGMA/Foveon X3F files to linear DNG
+Exec=fast-sigma-raw-gui
+Terminal=false
+Categories=Graphics;Photography;

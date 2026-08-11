@@ -1,0 +1,6 @@
+/target/
+/analysis/
+/dist/
+**/__pycache__/
+*.dng
+.DS_Store

@@ -1,0 +1,2 @@
+numpy>=2.0
+tifffile>=2026.7.0
