@@ -27,7 +27,6 @@ fn main() {
         .includes(&tiff.include_paths)
         .opt_level(3)
         .warnings(false)
-        .flag_if_supported("-flto")
         .flag_if_supported("-ffast-math")
         .flag_if_supported("-fno-math-errno")
         .compile("fast_sigma_x3f");
