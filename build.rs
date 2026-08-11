@@ -1,11 +1,27 @@
 fn main() {
     let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
     let static_tiff = std::env::var_os("LIBTIFF_STATIC").is_some();
-    let tiff = pkg_config::Config::new()
+    let manual_linux_static = static_tiff && target_os == "linux";
+    let mut tiff_config = pkg_config::Config::new();
+    tiff_config
         .atleast_version("4.0")
         .statik(static_tiff)
+        .cargo_metadata(!manual_linux_static);
+    let tiff = tiff_config
         .probe("libtiff-4")
         .expect("libtiff is required (macOS: brew install libtiff; Linux: install libtiff-dev)");
+    if manual_linux_static {
+        for path in &tiff.link_paths {
+            println!("cargo:rustc-link-search=native={}", path.display());
+        }
+        for library in &tiff.libs {
+            if matches!(library.as_str(), "c" | "dl" | "m" | "pthread" | "rt") {
+                println!("cargo:rustc-link-lib={library}");
+            } else {
+                println!("cargo:rustc-link-lib=static={library}");
+            }
+        }
+    }
     let sources = [
         "vendor/x3f-tools/x3f_io.c",
         "vendor/x3f-tools/x3f_process.c",
