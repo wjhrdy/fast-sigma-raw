@@ -16,7 +16,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
+
+static unsigned int fsr_processor_count(void) {
+#if defined(_WIN32) || defined(_WIN64)
+  SYSTEM_INFO info;
+  GetSystemInfo(&info);
+  return info.dwNumberOfProcessors > 0
+             ? (unsigned int)info.dwNumberOfProcessors
+             : 1;
+#else
+  long online = sysconf(_SC_NPROCESSORS_ONLN);
+  return online > 0 ? (unsigned int)online : 1;
+#endif
+}
 
 enum {
   FSR_OPEN_INPUT = 100,
@@ -309,13 +326,12 @@ static int merrill_bilateral_rgb_exact(x3f_area16_t *image,
   float weight[2048];
   merrill_bilateral_job_t *jobs = NULL;
   pthread_t *threads = NULL;
-  long online = sysconf(_SC_NPROCESSORS_ONLN);
   unsigned int thread_count, t;
   size_t pixels = (size_t)image->rows * image->columns;
   if (!noise_model || radius == 0 || image->rows <= 2 * radius ||
       image->columns <= 2 * radius)
     return 0;
-  thread_count = online > 0 ? (unsigned int)online : 1;
+  thread_count = fsr_processor_count();
   if (thread_count > 12) thread_count = 12;
   if (thread_count > image->rows - 2 * radius)
     thread_count = image->rows - 2 * radius;
