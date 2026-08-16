@@ -16,10 +16,22 @@ extract the entire archive.
 
 1. Open **Fast Sigma Raw** (`Fast Sigma Raw.app` on macOS or
    `fast-sigma-raw-gui` on Linux).
-2. Drag one or more `.X3F` files into the window, or choose them with the file
-   picker.
-3. Export beside each original or choose one output directory.
-4. Select **Convert to DNG**.
+2. Choose a local automatic-import destination and enable removable-media
+   watching.
+3. Connect a card or drive. Its X3F files are converted into the chosen folder;
+   the originals are left untouched.
+
+The watcher first checks for the Merrill camera-card layout
+`DCIM/NNNSIGMA/*.X3F`. It does not recursively scan unrelated attached disks.
+The app keeps a content-based SHA-256 import history, so reinserting a card or
+encountering another copy of the same X3F does not create another DNG. Existing
+same-name DNGs in the destination are conservatively treated as prior imports.
+The window can be minimized while it watches. Manual drag-and-drop conversion
+remains available under **Manual conversion**.
+
+When automatic ejection is enabled, a card is ejected only after every X3F was
+successfully imported or recognized as a duplicate. A failed conversion leaves
+the card mounted, and the desktop notification reports that it needs attention.
 
 Existing DNG files are not replaced unless **Replace existing DNG files** is
 enabled. Conversion runs in the background and processes queued files one at a

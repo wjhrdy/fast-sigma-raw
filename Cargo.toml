@@ -1,6 +1,6 @@
 [package]
 name = "fast-sigma-raw"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "MIT AND BSD-3-Clause"
 description = "Fast SIGMA/Foveon X3F to linear DNG converter"
@@ -10,6 +10,9 @@ repository = "https://github.com/wjhrdy/fast-sigma-raw"
 [dependencies]
 eframe = { version = "0.36.1", default-features = false, features = ["default_fonts", "glow", "wayland", "x11"] }
 rfd = { version = "0.17.2", default-features = false, features = ["xdg-portal", "wayland"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
 
 [build-dependencies]
 cc = "1.2"
