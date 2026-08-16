@@ -26,6 +26,21 @@
 #include <time.h>
 #include <assert.h>
 
+#ifndef FAST_SIGMA_RAW_VERSION
+#define FAST_SIGMA_RAW_VERSION "development"
+#endif
+
+/*
+ * Implemented in Rust from x3fuse-core's Apache-2.0 lossless-JPEG encoder.
+ * The returned buffer is a complete SOI..EOI LJ92 stream and must be released
+ * with fsr_free_ljpeg.
+ */
+extern unsigned char *fsr_encode_ljpeg(const uint16_t *samples,
+                                       size_t width, size_t height,
+                                       size_t components, size_t row_stride,
+                                       size_t *output_size);
+extern void fsr_free_ljpeg(unsigned char *data, size_t size);
+
 static void vec_double_to_float(double *a, float *b, int len)
 {
   int i;
@@ -39,7 +54,8 @@ static void write_identification(x3f_t *x3f, TIFF *tiff, int pipeline)
   char *model = NULL;
 
   TIFFSetField(tiff, TIFFTAG_MAKE, "SIGMA");
-  TIFFSetField(tiff, TIFFTAG_SOFTWARE, "fast-sigma-raw 0.1");
+  TIFFSetField(tiff, TIFFTAG_SOFTWARE,
+	       "fast-sigma-raw " FAST_SIGMA_RAW_VERSION);
   if (x3f_get_prop_entry(x3f, "CAMMODEL", &model) && model && model[0]) {
     TIFFSetField(tiff, TIFFTAG_MODEL, model);
     TIFFSetField(tiff, TIFFTAG_UNIQUECAMERAMODEL, model);
@@ -708,8 +724,7 @@ static x3f_return_t dump_data_as_dng(x3f_t *x3f,
   TIFFSetField(f_out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
   TIFFSetField(f_out, TIFFTAG_ORIENTATION, dng_orientation(x3f));
   TIFFSetField(f_out, TIFFTAG_DNGVERSION, "\001\004\000\000");
-  TIFFSetField(f_out, TIFFTAG_DNGBACKWARDVERSION,
-	       compress ? "\001\004\000\000" : "\001\003\000\000");
+  TIFFSetField(f_out, TIFFTAG_DNGBACKWARDVERSION, "\001\003\000\000");
   TIFFSetField(f_out, TIFFTAG_SUBIFD, 1, sub_ifds);
   /* Reserve the pointer so attaching the EXIF IFD can rewrite IFD0 safely. */
   TIFFSetField(f_out, TIFFTAG_EXIFIFD, exif_ifd);
@@ -787,14 +802,16 @@ static x3f_return_t dump_data_as_dng(x3f_t *x3f,
   TIFFSetField(f_out, TIFFTAG_SUBFILETYPE, 0);
   TIFFSetField(f_out, TIFFTAG_IMAGEWIDTH, image.columns);
   TIFFSetField(f_out, TIFFTAG_IMAGELENGTH, image.rows);
-  TIFFSetField(f_out, TIFFTAG_ROWSPERSTRIP, 32);
+  /*
+   * DNG lossless JPEG is most interoperable as one full-height strip. Some
+   * dcraw-derived readers stop after the first LJ92 strip.
+   */
+  TIFFSetField(f_out, TIFFTAG_ROWSPERSTRIP, compress ? image.rows : 32);
   TIFFSetField(f_out, TIFFTAG_SAMPLESPERPIXEL, 3);
   TIFFSetField(f_out, TIFFTAG_BITSPERSAMPLE, 16);
   TIFFSetField(f_out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
   TIFFSetField(f_out, TIFFTAG_COMPRESSION,
-	       compress ? COMPRESSION_ADOBE_DEFLATE : COMPRESSION_NONE);
-  if (compress)
-    TIFFSetField(f_out, TIFFTAG_PREDICTOR, PREDICTOR_HORIZONTAL);
+	       compress ? COMPRESSION_JPEG : COMPRESSION_NONE);
   TIFFSetField(f_out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_LINEARRAW);
   /* Prevent further chroma denoising in DNG processing software */
   TIFFSetField(f_out, TIFFTAG_CHROMABLURRADIUS, 0.0);
@@ -811,8 +828,27 @@ static x3f_return_t dump_data_as_dng(x3f_t *x3f,
       get_camf_rect_as_dngrect(x3f, "ActiveImageArea", &image, 1, active_area))
     TIFFSetField(f_out, TIFFTAG_ACTIVEAREA, active_area);
 
-  for (row=0; row < image.rows; row++)
-    TIFFWriteScanline(f_out, image.data + image.row_stride*row, row, 0);
+  if (compress) {
+    unsigned char *encoded;
+    size_t encoded_size = 0;
+    tmsize_t strip_size;
+    encoded = fsr_encode_ljpeg(image.data, image.columns, image.rows,
+			       3, image.row_stride, &encoded_size);
+    strip_size = (tmsize_t)encoded_size;
+    if (!encoded || strip_size < 0 || (size_t)strip_size != encoded_size ||
+	TIFFWriteRawStrip(f_out, 0, encoded, strip_size) < 0) {
+      x3f_printf(ERR, "Could not write lossless-JPEG DNG strip\n");
+      if (encoded) fsr_free_ljpeg(encoded, encoded_size);
+      TIFFClose(f_out);
+      free(image.buf);
+      free(preview.buf);
+      return X3F_OUTFILE_ERROR;
+    }
+    fsr_free_ljpeg(encoded, encoded_size);
+  } else {
+    for (row=0; row < image.rows; row++)
+      TIFFWriteScanline(f_out, image.data + image.row_stride*row, row, 0);
+  }
 
   TIFFWriteDirectory(f_out);
 

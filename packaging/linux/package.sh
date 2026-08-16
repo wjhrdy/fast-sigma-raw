@@ -21,6 +21,8 @@ cp "$project_dir/README.md" "$project_dir/LICENSE" \
   "$project_dir/THIRD_PARTY_NOTICES.md" "$stage/"
 cp "$project_dir/vendor/x3f-tools/LICENSE" "$stage/licenses/X3F_TOOLS_LICENSE.txt"
 cp "$project_dir/packaging/licenses/LIBTIFF_LICENSE.md" "$stage/licenses/"
+cp "$project_dir/packaging/licenses/X3FUSE_CORE_APACHE_LICENSE.txt" \
+  "$stage/licenses/"
 
 archive="$project_dir/dist/$name.tar.gz"
 rm -f "$archive"

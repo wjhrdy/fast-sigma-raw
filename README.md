@@ -170,7 +170,10 @@ fast-sigma-raw --pipeline bmt input.X3F calibration.dng
 | `bmt` | Normalized, gain-corrected B/M/T planes | Calibration and reverse-engineering diagnostics |
 
 Run `fast-sigma-raw --help` for compression, overwrite, bad-pixel, and
-spatial-gain controls. ZIP/Deflate compression is enabled by default.
+spatial-gain controls. DNG-standard 16-bit lossless JPEG (`Compression=7`) is
+enabled by default and produces bit-identical pixels; use `--no-compress` only
+when an uncompressed diagnostic file is needed. The encoder is adapted from
+[x3fuse-core](https://github.com/sagwaco/x3fuse-core).
 
 ## Build from source
 

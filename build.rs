@@ -36,12 +36,15 @@ fn main() {
     ];
 
     let mut build = cc::Build::new();
+    let package_version = std::env::var("CARGO_PKG_VERSION").unwrap_or_default();
+    let version_define = format!("\"{package_version}\"");
     build
         .files(sources)
         .include("vendor/x3f-tools")
         .includes(&tiff.include_paths)
         .opt_level(3)
         .warnings(false)
+        .define("FAST_SIGMA_RAW_VERSION", version_define.as_str())
         .flag_if_supported("-ffast-math")
         .flag_if_supported("-fno-math-errno")
         .compile("fast_sigma_x3f");
@@ -51,6 +54,7 @@ fn main() {
     }
     println!("cargo:rerun-if-changed=vendor/x3f-tools/x3f_denoise.h");
     println!("cargo:rerun-if-env-changed=LIBTIFF_STATIC");
+    println!("cargo:rerun-if-env-changed=CARGO_PKG_VERSION");
     #[cfg(target_os = "macos")]
     println!("cargo:rustc-link-lib=iconv");
     if target_os == "linux" {

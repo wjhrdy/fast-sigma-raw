@@ -4,6 +4,8 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
+mod ljpeg;
+
 unsafe extern "C" {
     fn fsr_convert(
         input: *const c_char,
@@ -17,6 +19,53 @@ unsafe extern "C" {
 }
 
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
+
+#[unsafe(no_mangle)]
+unsafe extern "C" fn fsr_encode_ljpeg(
+    samples: *const u16,
+    width: usize,
+    height: usize,
+    components: usize,
+    row_stride: usize,
+    output_size: *mut usize,
+) -> *mut u8 {
+    if samples.is_null() || output_size.is_null() || height == 0 {
+        return std::ptr::null_mut();
+    }
+    let Some(sample_count) = (height - 1).checked_mul(row_stride).and_then(|value| {
+        width
+            .checked_mul(components)
+            .and_then(|row| value.checked_add(row))
+    }) else {
+        return std::ptr::null_mut();
+    };
+    // SAFETY: the C image area owns at least `sample_count` samples for the
+    // duration of this synchronous call.
+    let samples = unsafe { std::slice::from_raw_parts(samples, sample_count) };
+    let Some(encoded) = ljpeg::encode(samples, width, height, components, row_stride) else {
+        return std::ptr::null_mut();
+    };
+    let mut encoded = encoded.into_boxed_slice();
+    let pointer = encoded.as_mut_ptr();
+    // SAFETY: output_size was validated above and points to caller storage.
+    unsafe { *output_size = encoded.len() };
+    std::mem::forget(encoded);
+    pointer
+}
+
+#[unsafe(no_mangle)]
+unsafe extern "C" fn fsr_free_ljpeg(data: *mut u8, size: usize) {
+    if data.is_null() {
+        return;
+    }
+    // SAFETY: data and size are the exact allocation returned by
+    // fsr_encode_ljpeg, and the C writer calls this exactly once.
+    unsafe {
+        drop(Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+            data, size,
+        )));
+    }
+}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SpatialGain {

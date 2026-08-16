@@ -29,6 +29,8 @@ cp "$project_dir/vendor/x3f-tools/LICENSE" \
   "$app/Contents/Resources/licenses/X3F_TOOLS_LICENSE.txt"
 cp "$project_dir/packaging/licenses/LIBTIFF_LICENSE.md" \
   "$app/Contents/Resources/licenses/"
+cp "$project_dir/packaging/licenses/X3FUSE_CORE_APACHE_LICENSE.txt" \
+  "$app/Contents/Resources/licenses/"
 
 # Ad-hoc signing records bundle integrity but does not identify a developer.
 # GitHub releases remain unnotarized until maintainers configure Apple secrets.
