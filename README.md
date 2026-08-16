@@ -33,6 +33,42 @@ When automatic ejection is enabled, a card is ejected only after every X3F was
 successfully imported or recognized as a duplicate. A failed conversion leaves
 the card mounted, and the desktop notification reports that it needs attention.
 
+### Seamless Lightroom Classic import
+
+Fast Sigma Raw can feed Lightroom Classic's watched-folder Auto Import. Use two
+different local folders:
+
+- an empty **Fast Sigma Raw Inbox** that temporarily receives converted DNGs;
+- a permanent **Lightroom Photos** folder where Lightroom moves and catalogs
+  them.
+
+Set it up once:
+
+1. Create an empty folder such as `~/Pictures/Fast Sigma Raw Inbox`. Select it
+   as the automatic-import destination in Fast Sigma Raw.
+2. In Lightroom Classic, choose **File > Auto Import > Auto Import Settings**.
+3. Set **Watched Folder** to **Fast Sigma Raw Inbox**. Adobe requires this
+   folder to be empty when selected and Lightroom does not watch its
+   subfolders.
+4. Set **Move To** to a separate permanent photo-library folder. Do not use the
+   watched inbox itself as the Lightroom destination.
+5. Leave **Develop Settings** at **None** unless you intentionally want a preset
+   applied. Camera, lens, exposure, and other capture metadata are already in
+   the DNG. Metadata presets can still be used for copyright or keywords.
+6. Optionally select **Standard** for **Initial Previews**, then choose
+   **File > Auto Import > Enable Auto Import**.
+7. Leave Lightroom Classic running, start Fast Sigma Raw, and minimize its
+   window. Connecting a compatible SIGMA card now converts each new X3F into
+   the watched inbox; Lightroom moves each completed DNG into the library and
+   adds it to the catalog. Fast Sigma Raw then ejects the card and posts a
+   notification.
+
+Lightroom moving DNGs out of the watched inbox is expected. Fast Sigma Raw's
+content-based import history still prevents the same X3F from being converted
+again when the card is reinserted. See Adobe's
+[Auto Import documentation](https://helpx.adobe.com/lightroom-classic/desktop/import-photos/import-photos-automatically.html)
+for additional naming, collection, metadata, and preview options.
+
 Existing DNG files are not replaced unless **Replace existing DNG files** is
 enabled. Conversion runs in the background and processes queued files one at a
 time to avoid excessive memory use.
