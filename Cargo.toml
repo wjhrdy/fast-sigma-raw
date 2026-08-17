@@ -1,6 +1,6 @@
 [package]
 name = "fast-sigma-raw"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 license = "MIT AND BSD-3-Clause AND Apache-2.0"
 description = "Fast SIGMA/Foveon X3F to linear DNG converter"
